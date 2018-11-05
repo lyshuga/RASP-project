@@ -11,11 +11,14 @@ class DataLoader:
         self.files = glob.glob(dir_path+"/"+self.path+"/*.*")
         self.maxIndex = len(self.files)
 
-    def getPair(self):
+    def getPair(self, blur=True, blurSize=(3,3)):
         if(self.index + 1 >= self.maxIndex):
             self.index = 0;
         img1 = cv2.cvtColor(cv2.imread(self.files[self.index]), cv2.COLOR_BGR2GRAY)
         img2 = cv2.cvtColor(cv2.imread(self.files[self.index + 1]), cv2.COLOR_BGR2GRAY)
+        if(blur):
+            img1 = cv2.blur(img1,blurSize)
+            img2 = cv2.blur(img2,blurSize)
         pair = (img1, img2)
         self.index = self.index + 1
         return pair
