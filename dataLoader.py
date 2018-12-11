@@ -3,17 +3,25 @@ import os
 import cv2
 
 class DataLoader:
-    def __init__(self, path):
+    def __init__(self, path, video=False):
         self.path = path
         self.index = 0
-        #load data
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.files = glob.glob(dir_path+"/"+self.path+"/*.*")
-        self.maxIndex = len(self.files)
+
+        if not video:
+            self.files = glob.glob(self.path + "/*.*")
+            self.maxIndex = len(self.files)
+        else:
+            self.videoData = cv2.VideoCapture(self.path)
+
+    def getFrame(self):
+        _, frame = self.videoData.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        return frame, gray
 
     def getPair(self, grayscale=True, blur=True, blurSize=(3,3)):
         if(self.index + 1 >= self.maxIndex):
-            self.index = 0;
+            self.index = 0
         img1 = cv2.imread(self.files[self.index])
         img2 = cv2.imread(self.files[self.index + 1])
         if(grayscale):
