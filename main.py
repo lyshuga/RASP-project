@@ -30,7 +30,7 @@ while True:
 
     cluster_data = [d for d in data if d[2] != 0 and d[3] != 0]
     if cluster_data != []:
-        clustering = DBSCAN(eps=0.00000001, min_samples=200, metric='cosine').fit(cluster_data) 
+        clustering = DBSCAN(eps=60, min_samples=10).fit(cluster_data) 
         for i,d in enumerate(cluster_data):
             if clustering.labels_[i] in class_colors.keys():
                 color = class_colors[clustering.labels_[i]]
@@ -39,7 +39,7 @@ while True:
                 color = tuple(map(int, color))
                 class_colors[clustering.labels_[i]] = color
 
-            frame = cv2.circle(frame, (d[0], d[1]), 5, color)
+            frame = cv2.circle(frame, (d[0], d[1]), 4, color, -1)
 
     cv2.imshow("Showcase",frame) 
     k = cv2.waitKey(1)
