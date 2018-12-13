@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 import sys
+# import keras
+
 
 from dataLoader import DataLoader
 from opticalFlow import OpticalFlow
@@ -11,7 +13,7 @@ data_path = sys.argv[1]
 loader = DataLoader(data_path, video=True)
 
 # Parameters for lucas kanade optical flow
-window_size = 65
+window_size = 55
 lk_params = dict( winSize  = (window_size, window_size),
                   maxLevel = 2,
                   criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.02))
@@ -33,16 +35,17 @@ while True:
 
     cluster_data = [d for d in data if d[2] != 0 and d[3] != 0]
     if cluster_data != []:
-        clustering = DBSCAN(cluster_data,60, 10)
+        clustering = DBSCAN(cluster_data,70, 5)
         for i,d in enumerate(cluster_data):
-            if clustering[i] in class_colors.keys():
-                color = class_colors[clustering[i]]
-            else:
-                color = np.random.randint(0,255,(1,3))[0]
-                color = tuple(map(int, color))
-                class_colors[clustering[i]] = color
+            if clustering[i]!=-1: #filer noise
+                if clustering[i] in class_colors.keys():
+                    color = class_colors[clustering[i]]
+                else:
+                    color = np.random.randint(0,255,(1,3))[0]
+                    color = tuple(map(int, color))
+                    class_colors[clustering[i]] = color
 
-            frame = cv2.circle(frame, (d[0], d[1]), 4, color, -1)
+                frame = cv2.circle(frame, (d[0], d[1]), 4, color, -1)
 
     cv2.imshow("Showcase",frame) 
     k = cv2.waitKey(1)

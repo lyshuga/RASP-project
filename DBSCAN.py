@@ -2,19 +2,21 @@ import numpy as np
 import math
 from sklearn.cluster import DBSCAN as dbs
 
-
+maxAngleDif = 25
+maxMagnDif  = 10
 
 def regionQuery(setOfPoints, point, eps):
-    def euclidianDistance(firstPoint, secondPoint):
-        x= 0
-        for i in range(len(firstPoint)):
-            x =x + (firstPoint[i] - secondPoint[i])*(firstPoint[i] - secondPoint[i])
-        x = math.sqrt(x)
-        return x
+    def euclidianDistOfinitPoints(firstPoint, secondPoint):
+            x =(firstPoint[0] - secondPoint[0])*(firstPoint[0] - secondPoint[0]) + (firstPoint[1] - secondPoint[1])*(firstPoint[1] - secondPoint[1])
+            x = math.sqrt(x)
+            return x
     epsNeighbourhood = []
     for i in range (len(setOfPoints)):
-        dist = euclidianDistance(point, setOfPoints[i])
-        if dist <= eps:
+        dist = euclidianDistOfinitPoints(point, setOfPoints[i])
+        difMagn = point[4]-setOfPoints[i][4]
+        difAngle = point[5]-setOfPoints[i][5]
+        isTrue =dist <= eps and abs(difMagn)<=maxMagnDif and abs(difAngle)<=maxAngleDif
+        if isTrue:
             epsNeighbourhood.append(setOfPoints[i])
     return epsNeighbourhood
 
