@@ -7,7 +7,7 @@ import sys
 from dataLoader import DataLoader
 from opticalFlow import OpticalFlow
 from DBSCAN import DBSCAN
-# from sklearn.cluster import DBSCAN
+import crowd_tracking as ct
 
 data_path = sys.argv[1]
 loader = DataLoader(data_path, video=True)
@@ -23,7 +23,7 @@ flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=20)
 
 class_colors = {}
 
-
+prev_cluster_info = None
 
 while True:
     frame, gray = loader.getFrame()
@@ -36,17 +36,26 @@ while True:
     cluster_data = [d for d in data if d[2] != 0 and d[3] != 0]
     if cluster_data != []:
         clustering = DBSCAN(cluster_data,70, 5)
+        
+        #Do crowd_tracking, so that same clusters in two different frames get same id (color)
+        cluster_info = ct.label_specific_properties(cluster_data, clustering)
+        
+        #TODO:
+        #if prev_cluster_info is not None:
+            
+            
         for i,d in enumerate(cluster_data):
             if clustering[i]!=-1: #filer noise
                 if clustering[i] in class_colors.keys():
                     color = class_colors[clustering[i]]
                 else:
-                    color = np.random.randint(0,255,(1,3))[0]
-                    color = tuple(map(int, color))
+                    color = tuple(map(int, np.random.randint(0,255,(1,3))[0]))
                     class_colors[clustering[i]] = color
 
                 frame = cv2.circle(frame, (d[0], d[1]), 4, color, -1)
-
+        
+        prev_cluster_info = cluster_info
+        
     cv2.imshow("Showcase",frame) 
     k = cv2.waitKey(1)
     if k == 27:
