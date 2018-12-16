@@ -30,12 +30,12 @@ while True:
     data = flow.calculateOpticalFlow(gray, treshold=1)
 
     for n in data:
-        frame = cv2.arrowedLine(frame, (n[0], n[1]), (n[2] + n[0], n[3] + n[1]), (0, 0, 255)) # drawing arrows
+        frame = cv2.arrowedLine(frame, (n[0], n[1]), (n[4] + n[0], n[5] + n[1]), (0, 0, 255)) # drawing arrows
 
 
-    cluster_data = [d for d in data if d[2] != 0 and d[3] != 0]
+    cluster_data = [d for d in data if d[4] != 0 and d[5] != 0]
     if cluster_data != []:
-        clustering = DBSCAN(cluster_data,70, 5)
+        clustering = DBSCAN(cluster_data,20, 2)
         for i,d in enumerate(cluster_data):
             if clustering[i]!=-1: #filer noise
                 if clustering[i] in class_colors.keys():

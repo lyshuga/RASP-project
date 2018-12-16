@@ -37,7 +37,7 @@ class OpticalFlow:
                     angle = math.degrees(math.atan(0))
                 else:
                     angle = math.degrees(math.atan(vector[1]/vector[0]))
-                flow_data.append([int(a), int(b), int(c-a), int(d-b), int(m), int(angle)])
+                flow_data.append([int(a), int(b), int(c), int(d), int(c-a), int(d-b), int(m), int(angle)])
                 # if math.sqrt(pow(c-a , 2.0) + pow(d-b , 2.0)) >= treshold:
                 #     flow_data.append([int(a), int(b) , int(c-a), int(d-b)]) # storing vector components
                 # else:

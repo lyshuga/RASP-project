@@ -13,8 +13,8 @@ def regionQuery(setOfPoints, point, eps):
     epsNeighbourhood = []
     for i in range (len(setOfPoints)):
         dist = euclidianDistOfinitPoints(point, setOfPoints[i])
-        difMagn = point[4]-setOfPoints[i][4]
-        difAngle = point[5]-setOfPoints[i][5]
+        difMagn = point[6]-setOfPoints[i][6]
+        difAngle = point[7]-setOfPoints[i][7]
         isTrue =dist <= eps and abs(difMagn)<=maxMagnDif and abs(difAngle)<=maxAngleDif
         if isTrue:
             epsNeighbourhood.append(setOfPoints[i])
