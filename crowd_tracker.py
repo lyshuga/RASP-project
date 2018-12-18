@@ -1,20 +1,22 @@
 import numpy as np
+import pprint as pp
 
-class CrowdTracker():
-    
+class CrowdTracker:
     def __init__(self, T, a_1, a_2):
         self.previous_cluster_properties = None
         self.T = T
         self.a_1 = a_1
         self.a_2 = a_2
-
     #inverse mapping (this should ideally already be calculated and returned in DBSCAN for efficiency)
-    def label_specific_properties(cluster_data, clustering):
+    def label_specific_properties(self, cluster_data, clustering):
         
         inverse_mapping = {c:[] for c in np.unique(clustering)}
         for i in range(len(cluster_data)):
             inverse_mapping[clustering[i]].append(cluster_data[i])
-            
+
+        if -1 in inverse_mapping.keys():
+            inverse_mapping.pop(-1) 
+        
         cluster_info = {}
         
         for c in inverse_mapping:
@@ -25,17 +27,34 @@ class CrowdTracker():
         
         return cluster_info
 
-    #TODO finish this
-    def S(ci_1, c_i2):
-        return self.a1 * (ci1) + self.a2
+    def S(self, ci_1, ci_2):
+        distance = np.sqrt(np.square(ci_1['center'][0][0] - ci_1['center'][0][0]) + np.square(ci_1['center'][0][1] - ci_1['center'][0][1]))
+        return self.a_1 * distance + self.a_2 * abs(ci_1['avg_directions'] - ci_2['avg_directions'])
 
-    def return_adjusted_coloring(self, cluster_data, clustering):
-        cur_clustering_properties = self.label_specific_properties(cluster_data, clustering)
-        if self.previous_cluster_properties is not None:
-            # Do cross checking to unify cluster IDs
-            for c_prev in self.previous_cluster_properties:
-                for c_new in cur_clustering_properties:
-                    x = self.S(self.previous_cluster_propertie[c_prev], cur_clustering_properties[c_new])
+    #TODO Deal with "noise" crowds as described in paper 
+    def map_cluster_IDs(self, cluster_data, clustering):
+        prev_cp = self.previous_cluster_properties
+        cur_cp = self.label_specific_properties(cluster_data, clustering)
+        if prev_cp is not None:
+            # Do cross checking to unify cluster IDs, map cluster IDs from current
+            # frame to cluster IDs from old frame OR to a new cluster ID
+            mapping = {-1: -1}
+            for cur_id in cur_cp.keys():
+                if cur_id == -1: continue;
+                # Assume that initially the current crowd is new => it gets a new (garantueed unique) ID
+                candidate_id, candidate_similarity = max(list(prev_cp.keys())+[0])+1 , 0
+                for prev_id in prev_cp.keys():
+                    similarity = self.S(prev_cp[prev_id], cur_cp[cur_id])
+                    if similarity > self.T and similarity > candidate_similarity:
+                        # New candidate found
+                        candidate_id, candidate_similarity = prev_id, similarity
+                # Map cur cluster ID to old OR new cluster ID
+                mapping[cur_id] = candidate_id
+            
+            pp.pprint(mapping)
+            new_clustering = np.array([mapping[i] for i in clustering])
+            return new_clustering, cur_cp
         else:
-            return clustering
+            self.previous_cluster_properties = cur_cp
+            return clustering, cur_cp
 

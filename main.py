@@ -1,8 +1,7 @@
 import numpy as np
 import cv2
 import sys
-# import keras
-
+import pprint as pp
 
 from dataLoader import DataLoader
 from opticalFlow import OpticalFlow
@@ -21,11 +20,9 @@ lk_params = dict( winSize  = (window_size, window_size),
 _, gray_frame = loader.getFrame()
 flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=20)
 
-crowd_tracker = CrowdTracker(T= 0.8, a_1=0.8, a_2=0.2)
+crowd_tracker = CrowdTracker(T=0.7, a_1=0.7, a_2=0.3)
 
 class_colors = {}
-
-prev_cluster_info = None
 
 while True:
     frame, gray = loader.getFrame()
@@ -40,10 +37,15 @@ while True:
         clustering = DBSCAN(cluster_data,70, 5)
         
         # Unify class IDs from previous and current frame
-        
-        
+        clustering2, cp = crowd_tracker.map_cluster_IDs(cluster_data, clustering)
+        #print(cp)
+        for i in cp:
+            frame = cv2.circle(frame, (int(cp[i]['center'][0][0]),
+                                       int(cp[i]['center'][0][1])),
+                                       10, (255,0,0), 5)
+
         for i,d in enumerate(cluster_data):
-            if clustering[i]!=-1: #filer noise
+            if clustering[i]!=-1: #filter noise
                 if clustering[i] in class_colors.keys():
                     color = class_colors[clustering[i]]
                 else:
@@ -51,8 +53,6 @@ while True:
                     class_colors[clustering[i]] = color
 
                 frame = cv2.circle(frame, (d[0], d[1]), 4, color, -1)
-        
-        prev_cluster_info = cluster_info
         
     cv2.imshow("Showcase",frame) 
     k = cv2.waitKey(1)
