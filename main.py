@@ -7,7 +7,7 @@ import sys
 from dataLoader import DataLoader
 from opticalFlow import OpticalFlow
 from DBSCAN import DBSCAN
-import crowd_tracking as ct
+from crowd_tracker import CrowdTracker
 
 data_path = sys.argv[1]
 loader = DataLoader(data_path, video=True)
@@ -20,6 +20,8 @@ lk_params = dict( winSize  = (window_size, window_size),
 
 _, gray_frame = loader.getFrame()
 flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=20)
+
+crowd_tracker = CrowdTracker(T= 0.8, a_1=0.8, a_2=0.2)
 
 class_colors = {}
 
@@ -37,13 +39,9 @@ while True:
     if cluster_data != []:
         clustering = DBSCAN(cluster_data,70, 5)
         
-        #Do crowd_tracking, so that same clusters in two different frames get same id (color)
-        cluster_info = ct.label_specific_properties(cluster_data, clustering)
+        # Unify class IDs from previous and current frame
         
-        #TODO:
-        #if prev_cluster_info is not None:
-            
-            
+        
         for i,d in enumerate(cluster_data):
             if clustering[i]!=-1: #filer noise
                 if clustering[i] in class_colors.keys():
