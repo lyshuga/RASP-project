@@ -19,20 +19,22 @@ class OpticalFlow:
 
     
     def calculateOpticalFlow(self, frame, treshold=1):
-        def euclidianDistance(firstPoint, secondPoint):
-            x= 0
-            for i in range(len(firstPoint)):
-               x =x + (firstPoint[i] - secondPoint[i])*(firstPoint[i] - secondPoint[i])
-            x = math.sqrt(x)
+        def euclidianDistance(x1, x2):
+            x = np.square(x1[0] - x2[0]) + np.square(x1[1] - x2[1])
+            x = np.sqrt(x)
             return x
+        
         new_points, _, _ = cv2.calcOpticalFlowPyrLK(self.prev_frame, frame, self.points_to_track, None, **self.lk_params)
 
         flow_data = []
+
         for (new, old) in zip(new_points, self.points_to_track):
                 a, b = old.ravel()
                 c, d = new.ravel()
                 m = euclidianDistance([a,b],[c,d])
                 vector = (c-a,d-b)
+                #flow_data_matrix = np.full((width, height), None)
+               
                 if vector[0] == 0:
                     angle = math.degrees(math.atan(0))
                 else:

@@ -1,20 +1,20 @@
 import numpy as np
-import math
-from sklearn.cluster import DBSCAN as dbs
 
 maxAngleDif = 25
 maxMagnDif  = 10
 
 def regionQuery(setOfPoints, point, eps):
-    def euclidianDistOfinitPoints(firstPoint, secondPoint):
-            x =(firstPoint[0] - secondPoint[0])*(firstPoint[0] - secondPoint[0]) + (firstPoint[1] - secondPoint[1])*(firstPoint[1] - secondPoint[1])
-            x = math.sqrt(x)
-            return x
+    def euclidianDistOfinitPoints(x1, x2):
+        x = np.square(x1[0] - x2[0]) + np.square(x1[1] - x2[1])
+        x = np.sqrt(x)
+        return x
     epsNeighbourhood = []
     for i in range (len(setOfPoints)):
-        dist = euclidianDistOfinitPoints(point, setOfPoints[i])
+
+        dist = euclidianDistOfinitPoints(point[0:2], setOfPoints[i])
         difMagn = point[6]-setOfPoints[i][6]
         difAngle = point[7]-setOfPoints[i][7]
+
         isTrue =dist <= eps and abs(difMagn)<=maxMagnDif and abs(difAngle)<=maxAngleDif
         if isTrue:
             epsNeighbourhood.append(setOfPoints[i])
@@ -23,6 +23,7 @@ def regionQuery(setOfPoints, point, eps):
 #label -1 -> NOISE
 #label -2 -> Unclassified
 #label 1.. -> Classified
+#TODO: write mapping for only clustered points
 def ExpandCluster(setOfPoints, labels, pointId, point, ClId, Eps, MinPts):
     seeds = regionQuery(setOfPoints, point, Eps)
     if len(seeds)<MinPts:
@@ -47,13 +48,21 @@ def ExpandCluster(setOfPoints, labels, pointId, point, ClId, Eps, MinPts):
 
 def DBSCAN(setOfPoints,Eps,MinPts):
     Id = 0
-    labels = []
-    for i in range(len(setOfPoints)):
-        labels.append(-2)
+    labels = [-2] * len(setOfPoints)
     for i in range(len(setOfPoints)):
         point = setOfPoints[i]
         if labels[i] == -2:
             if ExpandCluster(setOfPoints,labels, i, point,Id,Eps,MinPts):
                 Id = Id + 1
     return np.array(labels)
+
+
+
+
+
+
+
+
+
+
 
