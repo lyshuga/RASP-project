@@ -29,22 +29,24 @@ class OpticalFlow:
         flow_data = []
 
         for (new, old) in zip(new_points, self.points_to_track):
-                a, b = old.ravel()
-                c, d = new.ravel()
-                m = euclidianDistance([a,b],[c,d])
-                vector = (c-a,d-b)
-                #flow_data_matrix = np.full((width, height), None)
-               
-                if vector[0] == 0:
-                    angle = math.degrees(math.atan(0))
+                x_old, y_old = old.ravel()
+                x_new, y_new = new.ravel()
+                m = euclidianDistance([x_old,x_new],[y_old,y_new])
+                angle_vector = (x_new-x_old,y_new-y_old)
+                if angle_vector[0] == 0:
+                    alpha = math.degrees(math.atan(0))
                 else:
-                    angle = math.degrees(math.atan(vector[1]/vector[0]))
-                flow_data.append([int(a), int(b), int(c), int(d), int(c-a), int(d-b), int(m), int(angle)])
-                # if math.sqrt(pow(c-a , 2.0) + pow(d-b , 2.0)) >= treshold:
-                #     flow_data.append([int(a), int(b) , int(c-a), int(d-b)]) # storing vector components
-                # else:
-                #     flow_data.append([int(a), int(b) , 0, 0])
-
+                    alpha = math.degrees(math.atan(angle_vector[1]/angle_vector[0]))
+                
+                #we throw out points that have not moved far enough
+                if m >= treshold:
+                    flow_data.append([int(x_old),
+                                    int(y_old),
+                                    int(x_new),
+                                    int(y_new),
+                                    int(m), 
+                                    int(alpha)])
+                                    
         self.prev_frame = frame.copy()
         return flow_data
         

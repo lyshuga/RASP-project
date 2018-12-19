@@ -11,10 +11,10 @@ def regionQuery(setOfPoints, point, eps):
     epsNeighbourhood = []
     for i in range (len(setOfPoints)):
 
-        dist = euclidianDistOfinitPoints(point[0:2], setOfPoints[i])
-        difMagn = point[6]-setOfPoints[i][6]
-        difAngle = point[7]-setOfPoints[i][7]
-
+        dist = euclidianDistOfinitPoints(point[0:2], setOfPoints[i][0:2])
+        difMagn = point[4]-setOfPoints[i][4]
+        difAngle = point[5]-setOfPoints[i][5]
+        print('1')
         isTrue =dist <= eps and abs(difMagn)<=maxMagnDif and abs(difAngle)<=maxAngleDif
         if isTrue:
             epsNeighbourhood.append(setOfPoints[i])
@@ -51,6 +51,7 @@ def DBSCAN(setOfPoints,Eps,MinPts):
     labels = [-2] * len(setOfPoints)
     for i in range(len(setOfPoints)):
         point = setOfPoints[i]
+        print('1')
         if labels[i] == -2:
             if ExpandCluster(setOfPoints,labels, i, point,Id,Eps,MinPts):
                 Id = Id + 1
