@@ -31,7 +31,7 @@ class OpticalFlow:
         for (new, old) in zip(new_points, self.points_to_track):
                 x_old, y_old = old.ravel()
                 x_new, y_new = new.ravel()
-                m = euclidianDistance([x_old,x_new],[y_old,y_new])
+                m = euclidianDistance([x_old,y_old],[x_new,y_new])
                 angle_vector = (x_new-x_old,y_new-y_old)
                 if angle_vector[0] == 0:
                     alpha = math.degrees(math.atan(0))

@@ -38,7 +38,6 @@ while True:
         #     frame = cv2.circle(frame, (int(cp[i]['center'][0][0]),
         #                                int(cp[i]['center'][0][1])),
         #                                10, (255,0,0), 5)
-        print('1')
         for i,d in enumerate(data):
             if clustering[i]!=-1: #filter noise
                 if clustering[i] in class_colors.keys():
