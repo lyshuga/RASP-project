@@ -7,8 +7,9 @@ class CrowdTracker:
         self.T = T
         self.a_1 = a_1
         self.a_2 = a_2
+        self.max_value = 10000
     #inverse mapping (this should ideally already be calculated and returned in DBSCAN for efficiency)
-    def label_specific_properties(self, cluster_data, clustering):
+    def extract_cluster_properties(self, cluster_data, clustering):
         
         inverse_mapping = {c:[] for c in np.unique(clustering)}
         for i in range(len(cluster_data)):
@@ -22,39 +23,87 @@ class CrowdTracker:
         for c in inverse_mapping:
             mat = np.matrix(inverse_mapping[c])
             cluster_info[c] = {}
-            cluster_info[c]['center'] = mat[:,[0,1]].mean(axis=0).tolist() #consider using the other cords
+            x = mat[:,[0,1]].mean(axis=0)[0,:]
+            cluster_info[c]['center'] = list(map(int,mat[:,[0,1]].mean(axis=0).tolist()[0])) #consider using the other cords
             cluster_info[c]['avg_directions'] = np.asscalar(mat[:,5].mean(axis=0))
         
         return cluster_info
 
-    def S(self, ci_1, ci_2):
-        distance = np.sqrt(np.square(ci_1['center'][0][0] - ci_1['center'][0][0]) + np.square(ci_1['center'][0][1] - ci_1['center'][0][1]))
-        return self.a_1 * distance + self.a_2 * abs(ci_1['avg_directions'] - ci_2['avg_directions'])
+    def S(self, cp_1, cp_2):
+        distance = np.sqrt(np.square(cp_1['center'][0] - cp_2['center'][0]) + np.square(cp_1['center'][1] - cp_2['center'][1]))
+        return self.a_1 * distance + self.a_2 * abs(cp_1['avg_directions'] - cp_2['avg_directions'])
+
+    def evaluate_similarities(self, cps_1, cps_2):
+        #TODO this might become sparse
+        similarities = np.full((max(cps_1.keys())+1, max(cps_2.keys())+1), self.max_value, dtype='int16')
+        
+        for id_1 in cps_1.keys():
+            for id_2 in cps_2.keys():
+                similarities[id_1,id_2] = self.S(cps_1[id_1], cps_2[id_2])
+                # if similarities[id_1,id_2] > self.T:
+                #     similarities[id_1,id_2] = self.max_value
+
+        return similarities
+
+    def create_mapping(self, similarities, clustering):
+        mapping = {-1:-1}
+        for _ in range(similarities.shape[0]):
+            id_new, id_old = np.unravel_index(similarities.argmin(), similarities.shape)
+            similarities[id_new, :] = self.max_value
+            similarities[:, id_old] = self.max_value
+           # print(f'id_new: {id_new}, id_old: {id_old}')
+            mapping[id_new] = id_old
+           # print(similarities)
+        
+        # Consider clusters, which were not mapped, and give them a new ID
+        for c in clustering:
+            if c not in mapping.keys():
+                mapping[c] = max(mapping.keys()) + 1
+        
+        return mapping
 
     #TODO Deal with "noise" crowds as described in paper 
     def map_cluster_IDs(self, cluster_data, clustering):
         prev_cp = self.previous_cluster_properties
-        cur_cp = self.label_specific_properties(cluster_data, clustering)
+        cur_cp = self.extract_cluster_properties(cluster_data, clustering)
+
         if prev_cp is not None:
-            # Do cross checking to unify cluster IDs, map cluster IDs from current
-            # frame to cluster IDs from old frame OR to a new cluster ID
-            mapping = {-1: -1}
-            for cur_id in cur_cp.keys():
-                if cur_id == -1: continue;
-                # Assume that initially the current crowd is new => it gets a new (garantueed unique) ID
-                candidate_id, candidate_similarity = max(list(prev_cp.keys())+[0])+1 , 0
-                for prev_id in prev_cp.keys():
-                    similarity = self.S(prev_cp[prev_id], cur_cp[cur_id])
-                    if similarity > self.T and similarity > candidate_similarity:
-                        # New candidate found
-                        candidate_id, candidate_similarity = prev_id, similarity
-                # Map cur cluster ID to old OR new cluster ID
-                mapping[cur_id] = candidate_id
-            
-            pp.pprint(mapping)
+            similarities = self.evaluate_similarities(cur_cp, prev_cp)
+            # print(similarities)
+            mapping = self.create_mapping(similarities, cur_cp.keys())
+            print(mapping)
             new_clustering = np.array([mapping[i] for i in clustering])
             return new_clustering, cur_cp
         else:
             self.previous_cluster_properties = cur_cp
             return clustering, cur_cp
 
+    # #TODO Deal with "noise" crowds as described in paper 
+    # def map_cluster_IDs_alt(self, cluster_data, clustering):
+    #     prev_cp = self.previous_cluster_properties
+    #     cur_cp = self.extract_cluster_properties(cluster_data, clustering)
+    #     if prev_cp is not None:
+    #         # Do cross checking to unify cluster IDs, map cluster IDs from current
+    #         # frame to cluster IDs from old frame OR to a new cluster ID
+    #         mapping = {-1: -1}
+    #         already_mapped = set() 
+    #         for cur_id in cur_cp.keys():
+    #             # Assume that initially the current crowd is new => it gets a new (garantueed unique) ID
+    #             print((already_mapped))
+    #             candidate_id, candidate_similarity = max(list(prev_cp.keys())+list(already_mapped)+[0])+1 , 0
+    #             for prev_id in prev_cp.keys() - already_mapped:
+    #                 similarity = self.S(prev_cp[prev_id], cur_cp[cur_id])
+    #                 if similarity < self.T and similarity < candidate_similarity:
+    #                     # New candidate found
+    #                     candidate_id, candidate_similarity = prev_id, similarity
+    #                     print(already_mapped)
+    #             # Map cur cluster ID to old OR new cluster ID
+    #             mapping[cur_id] = candidate_id
+    #             already_mapped.add(candidate_id)
+                
+    #         pp.pprint(mapping)
+    #         new_clustering = np.array([mapping[i] for i in clustering])
+    #         return new_clustering, cur_cp
+    #     else:
+    #         self.previous_cluster_properties = cur_cp
+    #         return clustering, cur_cp

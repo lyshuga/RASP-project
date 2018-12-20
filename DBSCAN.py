@@ -50,7 +50,6 @@ def DBSCAN(setOfPoints,Eps,MinPts):
     labels = [-2] * len(setOfPoints)
     for i in range(len(setOfPoints)):
         point = setOfPoints[i]
-        print('1')
         if labels[i] == -2:
             if ExpandCluster(setOfPoints,labels, i, point,Id,Eps,MinPts):
                 Id = Id + 1
