@@ -2,11 +2,17 @@ import numpy as np
 import pprint as pp
 
 class CrowdTracker:
-    def __init__(self, T, a_1, a_2):
+    def __init__(self, T, a_1, a_2, a_3, norm_a_1, norm_a_2, norm_a_3):
         self.previous_cluster_properties = None
         self.T = T
-        self.a_1 = a_1
-        self.a_2 = a_2
+        self.a = {}
+        self.a['center'] = a_1
+        self.a['avg_directions'] = a_2
+        self.a['area'] = a_3
+        self.norm = {}
+        self.norm['center'] = norm_a_1
+        self.norm['avg_directions'] = norm_a_2
+        self.norm['area'] = norm_a_3
         self.max_value = 10000
     #inverse mapping (this should ideally already be calculated and returned in DBSCAN for efficiency)
     def extract_cluster_properties(self, cluster_data, clustering):
@@ -23,15 +29,27 @@ class CrowdTracker:
         for c in inverse_mapping:
             mat = np.matrix(inverse_mapping[c])
             cluster_info[c] = {}
-            x = mat[:,[0,1]].mean(axis=0)[0,:]
+           # x = mat[:,[0,1]].mean(axis=0)[0,:]
             cluster_info[c]['center'] = list(map(int,mat[:,[0,1]].mean(axis=0).tolist()[0])) #consider using the other cords
             cluster_info[c]['avg_directions'] = np.asscalar(mat[:,5].mean(axis=0))
-        
+            cluster_info[c]['area'] = len(inverse_mapping[c])
+            
         return cluster_info
 
     def S(self, cp_1, cp_2):
-        distance = np.sqrt(np.square(cp_1['center'][0] - cp_2['center'][0]) + np.square(cp_1['center'][1] - cp_2['center'][1]))
-        return self.a_1 * distance + self.a_2 * abs(cp_1['avg_directions'] - cp_2['avg_directions'])
+        d = {}
+        d['center'] = np.sqrt(np.square(cp_1['center'][0] - cp_2['center'][0]) + np.square(cp_1['center'][1] - cp_2['center'][1]))
+        phi = abs(cp_1['avg_directions'] - cp_2['avg_directions']) % 360
+        d['avg_directions'] = 360 - phi if phi > 180 else phi
+        d['area'] = abs(cp_1['area'] - cp_2['area'])
+        result = 0
+
+        for k in self.a.keys():
+            #print(f'{k}: {(d[k]/self.norm[k])}')
+            result += self.a[k] * (d[k]/self.norm[k])
+        
+        print(result)
+        return result
 
     def evaluate_similarities(self, cps_1, cps_2):
         #TODO this might become sparse
@@ -40,8 +58,8 @@ class CrowdTracker:
         for id_1 in cps_1.keys():
             for id_2 in cps_2.keys():
                 similarities[id_1,id_2] = self.S(cps_1[id_1], cps_2[id_2])
-                # if similarities[id_1,id_2] > self.T:
-                #     similarities[id_1,id_2] = self.max_value
+                if similarities[id_1,id_2] > self.T:
+                    similarities[id_1,id_2] = self.max_value
 
         return similarities
 
@@ -56,9 +74,11 @@ class CrowdTracker:
            # print(similarities)
         
         # Consider clusters, which were not mapped, and give them a new ID
+        counter = 0
         for c in clustering:
             if c not in mapping.keys():
-                mapping[c] = max(mapping.keys()) + 1
+                mapping[c] = max(mapping.keys()) + 1 + counter
+                counter += 1
         
         return mapping
 
