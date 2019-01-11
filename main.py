@@ -18,7 +18,7 @@ lk_params = dict( winSize  = (window_size, window_size),
                   criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.02))
 
 _, gray_frame = loader.getFrame()
-flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=10)
+flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=15)
 
 
 norm_a_1 = 600
@@ -36,7 +36,7 @@ while True:
    
     if data != []:
         # TODO remove noise from clustering, because for high min_pts sometimes only noise is returned
-        clustering = DBSCAN(data, 15, 8)
+        clustering = DBSCAN(data, 30, 5)
         
         # Unify class IDs from previous and current frame
         clustering, cp = crowd_tracker.map_cluster_IDs(data, clustering)

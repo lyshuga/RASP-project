@@ -48,7 +48,7 @@ class CrowdTracker:
             #print(f'{k}: {(d[k]/self.norm[k])}')
             result += self.a[k] * (d[k]/self.norm[k])
         
-        print(result)
+      #  print(result)
         return result
 
     def evaluate_similarities(self, cps_1, cps_2):
@@ -58,8 +58,8 @@ class CrowdTracker:
         for id_1 in cps_1.keys():
             for id_2 in cps_2.keys():
                 similarities[id_1,id_2] = self.S(cps_1[id_1], cps_2[id_2])
-                if similarities[id_1,id_2] > self.T:
-                    similarities[id_1,id_2] = self.max_value
+                #if similarities[id_1,id_2] > self.T:
+                  #  similarities[id_1,id_2] = self.max_value
 
         return similarities
 
