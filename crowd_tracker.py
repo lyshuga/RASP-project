@@ -3,7 +3,7 @@ import pprint as pp
 
 class CrowdTracker:
     def __init__(self, T, a_1, a_2, a_3, norm_a_1, norm_a_2, norm_a_3):
-        self.previous_cluster_properties = None
+        self.previous_cluster_properties = {}
         self.T = T
         self.a = {}
         self.a['center'] = a_1
@@ -44,6 +44,7 @@ class CrowdTracker:
         d['area'] = abs(cp_1['area'] - cp_2['area'])
         result = 0
 
+
         for k in self.a.keys():
             #print(f'{k}: {(d[k]/self.norm[k])}')
             result += self.a[k] * (d[k]/self.norm[k])
@@ -53,6 +54,7 @@ class CrowdTracker:
 
     def evaluate_similarities(self, cps_1, cps_2):
         #TODO this might become sparse
+        
         similarities = np.full((max(cps_1.keys())+1, max(cps_2.keys())+1), self.max_value, dtype='int16')
         
         for id_1 in cps_1.keys():
@@ -86,8 +88,8 @@ class CrowdTracker:
     def map_cluster_IDs(self, cluster_data, clustering):
         prev_cp = self.previous_cluster_properties
         cur_cp = self.extract_cluster_properties(cluster_data, clustering)
-
-        if prev_cp is not None:
+        print(len(np.unique(clustering))) 
+        if prev_cp != {}: # only track if there were clusters before
             similarities = self.evaluate_similarities(cur_cp, prev_cp)
             # print(similarities)
             mapping = self.create_mapping(similarities, cur_cp.keys())
