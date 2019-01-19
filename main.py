@@ -1,7 +1,10 @@
 import numpy as np
 import cv2
 import sys
+import os
 import pprint as pp
+import time
+time.time
 
 from dataLoader import DataLoader
 from opticalFlow import OpticalFlow
@@ -9,6 +12,13 @@ from DBSCAN import DBSCAN
 from crowd_tracker import CrowdTracker
 
 data_path = sys.argv[1]
+
+# To save results
+if not os.path.exists('out'):
+   os.makedirs('out')
+out_dir_name = 'out\\'+data_path.split('\\')[-1]+'_'+str(time.time())
+os.makedirs(out_dir_name)
+
 loader = DataLoader(data_path, video=True)
 
 # Parameters for lucas kanade optical flow
@@ -29,8 +39,9 @@ crowd_tracker = CrowdTracker(T=0.5, a_1=0.7, a_2=0.2, a_3=0.1, norm_a_1=norm_a_1
 cp_prev = None
 
 class_colors = {}
-
+frame_counter = 0
 while True:
+    frame_counter+=1
     frame, gray = loader.getFrame()
     data = flow.calculateOpticalFlow(gray, treshold=1)
    
@@ -62,6 +73,7 @@ while True:
             
         cp_prev = cp
     cv2.imshow("Showcase",frame) 
+    cv2.imwrite(out_dir_name+f'\\frame_{frame_counter}.jpg', frame)
     k = cv2.waitKey(1)
     if k == 27:
         cv2.destroyAllWindows()
