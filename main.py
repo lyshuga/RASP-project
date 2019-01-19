@@ -21,21 +21,38 @@ os.makedirs(out_dir_name)
 
 loader = DataLoader(data_path, video=True)
 
-# Parameters for lucas kanade optical flow
-window_size = 55
+#########################
+# Parameters
+
+# Optical Flow
+window_size = 13 #for 
+grid_space = 10
+
+# Crowd Tracking
+T = 0.6
+a_1 = 0.7
+a_2 = 0.2
+a_3 = 0.1
+norm_a_1 = 500
+norm_a_2 = 180
+norm_a_3 = 800
+
+# DBSCAN
+eps = 25 
+min_points = 5
+
+###########################
 lk_params = dict( winSize  = (window_size, window_size),
                   maxLevel = 2,
                   criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.02))
 
 _, gray_frame = loader.getFrame()
-flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=15)
+flow = OpticalFlow(lk_params, first_frame=gray_frame, grid_space=grid_space)
 
 
-norm_a_1 = 600
-norm_a_2 = 180
-norm_a_3 = 800
 
-crowd_tracker = CrowdTracker(T=0.5, a_1=0.7, a_2=0.2, a_3=0.1, norm_a_1=norm_a_1, norm_a_2=norm_a_2, norm_a_3=norm_a_3)
+
+crowd_tracker = CrowdTracker(T=T, a_1=a_1, a_2=a_2, a_3=a_3, norm_a_1=norm_a_1, norm_a_2=norm_a_2, norm_a_3=norm_a_3)
 cp_prev = None
 
 class_colors = {}
@@ -47,7 +64,7 @@ while True:
    
     if data != []:
         # TODO remove noise from clustering, because for high min_pts sometimes only noise is returned
-        clustering = DBSCAN(data, 30, 5)
+        clustering = DBSCAN(data, eps, min_points)
         
         # Unify class IDs from previous and current frame
         clustering, cp = crowd_tracker.map_cluster_IDs(data, clustering)
