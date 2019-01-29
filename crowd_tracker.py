@@ -38,7 +38,8 @@ class CrowdTracker:
 
     def S(self, cp_1, cp_2):
         d = {}
-        d['center'] = np.sqrt(np.square(cp_1['center'][0] - cp_2['center'][0]) + np.square(cp_1['center'][1] - cp_2['center'][1]))
+        d['center'] = np.sqrt(np.square(cp_1['center'][0] - cp_2['center'][0]) +
+                              np.square(cp_1['center'][1] - cp_2['center'][1]))
         phi = abs(cp_1['avg_directions'] - cp_2['avg_directions']) % 360
         d['avg_directions'] = 360 - phi if phi > 180 else phi
         d['area'] = abs(cp_1['area'] - cp_2['area'])
@@ -46,22 +47,19 @@ class CrowdTracker:
 
 
         for k in self.a.keys():
-            #print(f'{k}: {(d[k]/self.norm[k])}')
             result += self.a[k] * (d[k]/self.norm[k])
-        
-      #  print(result)
         return result
 
     def evaluate_similarities(self, cps_1, cps_2):
         #TODO this might become sparse
         
-        similarities = np.full((max(cps_1.keys())+1, max(cps_2.keys())+1), self.max_value, dtype='int16')
+        similarities = np.full((max(cps_1.keys())+1, max(cps_2.keys())+1), self.max_value, dtype='float32')
         
         for id_1 in cps_1.keys():
             for id_2 in cps_2.keys():
                 similarities[id_1,id_2] = self.S(cps_1[id_1], cps_2[id_2])
-                #if similarities[id_1,id_2] > self.T:
-                  #  similarities[id_1,id_2] = self.max_value
+                if similarities[id_1,id_2] > self.T:
+                    similarities[id_1,id_2] = self.max_value
 
         return similarities
 
@@ -70,7 +68,7 @@ class CrowdTracker:
         for _ in range(similarities.shape[0]):
             id_new, id_old = np.unravel_index(similarities.argmin(), similarities.shape)
             similarities[id_new, :] = self.max_value
-            similarities[:, id_old] = self.max_value
+            #similarities[:, id_old] = self.max_value
            # print(f'id_new: {id_new}, id_old: {id_old}')
             mapping[id_new] = id_old
            # print(similarities)
@@ -87,18 +85,19 @@ class CrowdTracker:
     #TODO Deal with "noise" crowds as described in paper 
     def map_cluster_IDs(self, cluster_data, clustering):
         prev_cp = self.previous_cluster_properties
-        cur_cp = self.extract_cluster_properties(cluster_data, clustering)
+        pseudo_cur_cp = self.extract_cluster_properties(cluster_data, clustering)
         print(len(np.unique(clustering))) 
         if prev_cp != {}: # only track if there were clusters before
-            similarities = self.evaluate_similarities(cur_cp, prev_cp)
+            similarities = self.evaluate_similarities(pseudo_cur_cp, prev_cp)
             # print(similarities)
-            mapping = self.create_mapping(similarities, cur_cp.keys())
+            mapping = self.create_mapping(similarities, pseudo_cur_cp.keys())
             print(mapping)
             new_clustering = np.array([mapping[i] for i in clustering])
+            cur_cp = self.extract_cluster_properties(cluster_data, new_clustering)
             return new_clustering, cur_cp
         else:
-            self.previous_cluster_properties = cur_cp
-            return clustering, cur_cp
+            self.previous_cluster_properties = pseudo_cur_cp
+            return clustering, pseudo_cur_cp
 
     # #TODO Deal with "noise" crowds as described in paper 
     # def map_cluster_IDs_alt(self, cluster_data, clustering):
